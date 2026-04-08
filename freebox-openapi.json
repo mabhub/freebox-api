@@ -1026,7 +1026,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_PvrRecordingList"
+                  "$ref": "#/components/schemas/ApiResponse_PvrProgrammedTimerList"
                 }
               }
             }
@@ -1048,17 +1048,22 @@
           "PVR"
         ],
         "requestBody": {
+          "required": true,
           "content": {
-            "application/json": {}
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PvrProgrammedTimerCreate"
+              }
+            }
           }
         },
         "responses": {
           "200": {
-            "description": "Succès",
+            "description": "Timer créé",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponseBase"
+                  "$ref": "#/components/schemas/ApiResponse_PvrProgrammedTimer"
                 }
               }
             }
@@ -1088,7 +1093,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponse_PvrRecordingList"
+                  "$ref": "#/components/schemas/ApiResponse_PvrFinishedRecordingList"
                 }
               }
             }
@@ -1140,17 +1145,22 @@
           "PVR"
         ],
         "requestBody": {
+          "required": true,
           "content": {
-            "application/json": {}
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PvrGeneratorCreate"
+              }
+            }
           }
         },
         "responses": {
           "200": {
-            "description": "Succès",
+            "description": "Générateur créé",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponseBase"
+                  "$ref": "#/components/schemas/ApiResponse_PvrGenerator"
                 }
               }
             }
@@ -6442,7 +6452,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponseBase"
+                  "$ref": "#/components/schemas/ApiResponse_PvrProgrammedTimer"
                 }
               }
             }
@@ -6464,8 +6474,13 @@
           "PVR"
         ],
         "requestBody": {
+          "required": true,
           "content": {
-            "application/json": {}
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PvrProgrammedTimerCreate"
+              }
+            }
           }
         },
         "responses": {
@@ -6474,7 +6489,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponseBase"
+                  "$ref": "#/components/schemas/ApiResponse_PvrProgrammedTimer"
                 }
               }
             }
@@ -6579,7 +6594,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponseBase"
+                  "$ref": "#/components/schemas/ApiResponse_PvrFinishedRecording"
                 }
               }
             }
@@ -6601,8 +6616,13 @@
           "PVR"
         ],
         "requestBody": {
+          "required": true,
           "content": {
-            "application/json": {}
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PvrFinishedRecordingUpdate"
+              }
+            }
           }
         },
         "responses": {
@@ -6611,7 +6631,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponseBase"
+                  "$ref": "#/components/schemas/ApiResponse_PvrFinishedRecording"
                 }
               }
             }
@@ -6677,7 +6697,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponseBase"
+                  "$ref": "#/components/schemas/ApiResponse_PvrGenerator"
                 }
               }
             }
@@ -6699,8 +6719,13 @@
           "PVR"
         ],
         "requestBody": {
+          "required": true,
           "content": {
-            "application/json": {}
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PvrGeneratorCreate"
+              }
+            }
           }
         },
         "responses": {
@@ -6709,7 +6734,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponseBase"
+                  "$ref": "#/components/schemas/ApiResponse_PvrGenerator"
                 }
               }
             }
@@ -10593,11 +10618,14 @@
             "description": "Indique si l'utilisateur est connecté"
           },
           "challenge": {
-            "type": "array",
+            "type": [
+              "string",
+              "array"
+            ],
             "items": {
               "type": "string"
             },
-            "description": "Fragments JavaScript à évaluer pour construire le challenge d'authentification"
+            "description": "Challenge d'authentification. String pour le flux app-auth (POST /login/session/), array de fragments JavaScript pour le flux web-login (POST /login/)"
           },
           "password_salt": {
             "type": "string",
@@ -10874,9 +10902,10 @@
           },
           "type": {
             "type": "string",
-            "description": "Type de flux",
+            "description": "Type de flux (iptv ou dvb). Absent ou vide signifie auto.",
             "enum": [
-              "iptv"
+              "iptv",
+              "dvb"
             ],
             "examples": [
               "iptv"
@@ -10896,7 +10925,9 @@
             "enum": [
               "auto",
               "hd",
-              "ld"
+              "sd",
+              "ld",
+              "3d"
             ],
             "examples": [
               "auto"
@@ -11085,6 +11116,24 @@
             "examples": [
               "1775338200_abd37b04"
             ]
+          },
+          "short_desc": {
+            "type": "string",
+            "description": "Résumé court du programme (peut être présent dans les réponses by_time/by_channel)"
+          },
+          "year": {
+            "type": "integer",
+            "description": "Année de production (peut être présent dans les réponses by_time/by_channel)",
+            "examples": [
+              2021
+            ]
+          },
+          "cast": {
+            "type": "array",
+            "description": "Casting du programme (peut être présent dans les réponses by_time/by_channel)",
+            "items": {
+              "$ref": "#/components/schemas/CastMember"
+            }
           }
         }
       },
@@ -11097,30 +11146,12 @@
           {
             "type": "object",
             "properties": {
-              "year": {
-                "type": "integer",
-                "description": "Année de production",
-                "examples": [
-                  2021
-                ]
-              },
-              "short_desc": {
-                "type": "string",
-                "description": "Résumé court du programme"
-              },
               "channel_id": {
                 "type": "string",
                 "description": "UUID de la chaîne sur laquelle le programme est diffusé",
                 "examples": [
                   "uuid-webtv-404"
                 ]
-              },
-              "cast": {
-                "type": "array",
-                "description": "Casting du programme (acteurs, réalisateurs, scénaristes, présentateurs)",
-                "items": {
-                  "$ref": "#/components/schemas/CastMember"
-                }
               }
             }
           }
@@ -11262,101 +11293,6 @@
           }
         }
       },
-      "ApiResponse_PvrRecordingList": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ApiResponseBase"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "result": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/PvrRecording"
-                }
-              }
-            }
-          }
-        ]
-      },
-      "PvrRecording": {
-        "type": "object",
-        "required": [
-          "id",
-          "enabled",
-          "channel_name",
-          "broadcast_type"
-        ],
-        "properties": {
-          "id": {
-            "type": "integer",
-            "description": "Identifiant de l'enregistrement"
-          },
-          "enabled": {
-            "type": "boolean",
-            "description": "L'enregistrement est actif"
-          },
-          "path": {
-            "type": "string",
-            "description": "Dossier de destination",
-            "examples": [
-              "Enregistrements"
-            ]
-          },
-          "filename": {
-            "type": "string",
-            "description": "Nom du fichier enregistré",
-            "examples": [
-              "France 4 - Pomme à l'Olympia - 04-07-2025 00h10 01h45.m2ts"
-            ]
-          },
-          "channel_name": {
-            "type": "string",
-            "description": "Nom de la chaîne enregistrée",
-            "examples": [
-              "France 4"
-            ]
-          },
-          "media": {
-            "type": "string",
-            "description": "Support de stockage",
-            "examples": [
-              "Disque dur"
-            ]
-          },
-          "end": {
-            "type": "integer",
-            "description": "Timestamp Unix de fin de l'enregistrement"
-          },
-          "byte_size": {
-            "type": "integer",
-            "description": "Taille du fichier en octets"
-          },
-          "altered": {
-            "type": "boolean",
-            "description": "L'enregistrement a été altéré/édité"
-          },
-          "broadcast_type": {
-            "type": "string",
-            "description": "Type de diffusion",
-            "enum": [
-              "tv"
-            ],
-            "examples": [
-              "tv"
-            ]
-          },
-          "has_record_gen": {
-            "type": "boolean",
-            "description": "Créé par un générateur d'enregistrements"
-          },
-          "record_gen_id": {
-            "type": "integer",
-            "description": "ID du générateur d'enregistrements associé"
-          }
-        }
-      },
       "ApiResponse_PvrGeneratorList": {
         "allOf": [
           {
@@ -11368,8 +11304,7 @@
               "result": {
                 "type": "array",
                 "items": {
-                  "type": "object",
-                  "description": "Générateur d'enregistrements (structure variable)"
+                  "$ref": "#/components/schemas/PvrGenerator"
                 }
               }
             }
@@ -15411,6 +15346,553 @@
           "success",
           "error_code"
         ]
+      },
+      "PvrFinishedRecording": {
+        "type": "object",
+        "required": [
+          "id",
+          "start",
+          "end",
+          "name",
+          "channel_name",
+          "broadcast_type"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Identifiant de l'enregistrement"
+          },
+          "start": {
+            "type": "integer",
+            "description": "Timestamp Unix de début de l'enregistrement"
+          },
+          "end": {
+            "type": "integer",
+            "description": "Timestamp Unix de fin de l'enregistrement"
+          },
+          "name": {
+            "type": "string",
+            "description": "Titre de l'enregistrement",
+            "examples": [
+              "Journal de 20h"
+            ]
+          },
+          "subname": {
+            "type": "string",
+            "description": "Sous-titre ou nom de l'épisode"
+          },
+          "channel_uuid": {
+            "type": "string",
+            "description": "UUID de la chaîne enregistrée",
+            "examples": [
+              "uuid-webtv-201"
+            ]
+          },
+          "channel_name": {
+            "type": "string",
+            "description": "Nom de la chaîne enregistrée",
+            "examples": [
+              "France 4"
+            ]
+          },
+          "media": {
+            "type": "string",
+            "description": "Support de stockage",
+            "examples": [
+              "Disque dur"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "description": "Dossier de destination",
+            "examples": [
+              "Enregistrements"
+            ]
+          },
+          "filename": {
+            "type": "string",
+            "description": "Nom du fichier enregistré",
+            "examples": [
+              "France 4 - Pomme à l'Olympia - 04-07-2025 00h10 01h45.m2ts"
+            ]
+          },
+          "byte_size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Taille du fichier en octets"
+          },
+          "secure": {
+            "type": "boolean",
+            "description": "L'enregistrement est protégé par DRM"
+          },
+          "broadcast_type": {
+            "type": "string",
+            "description": "Type de diffusion",
+            "enum": [
+              "tv"
+            ],
+            "examples": [
+              "tv"
+            ]
+          },
+          "has_record_gen": {
+            "type": "boolean",
+            "description": "Créé par un générateur d'enregistrements"
+          },
+          "record_gen_id": {
+            "type": "integer",
+            "description": "ID du générateur d'enregistrements associé"
+          }
+        }
+      },
+      "PvrProgrammedTimer": {
+        "type": "object",
+        "required": [
+          "id",
+          "start",
+          "end",
+          "channel_uuid",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Identifiant du timer"
+          },
+          "start": {
+            "type": "integer",
+            "description": "Timestamp Unix de début de l'enregistrement"
+          },
+          "end": {
+            "type": "integer",
+            "description": "Timestamp Unix de fin de l'enregistrement"
+          },
+          "margin_before": {
+            "type": "integer",
+            "description": "Marge avant le début (en secondes)",
+            "examples": [
+              300
+            ]
+          },
+          "margin_after": {
+            "type": "integer",
+            "description": "Marge après la fin (en secondes)",
+            "examples": [
+              60
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "Titre de l'enregistrement"
+          },
+          "subname": {
+            "type": "string",
+            "description": "Sous-titre ou nom de l'épisode"
+          },
+          "channel_uuid": {
+            "type": "string",
+            "description": "UUID de la chaîne",
+            "examples": [
+              "uuid-webtv-201"
+            ]
+          },
+          "channel_name": {
+            "type": "string",
+            "description": "Nom de la chaîne"
+          },
+          "channel_type": {
+            "type": "string",
+            "description": "Type de source préféré (vide = auto)",
+            "enum": [
+              "",
+              "iptv",
+              "dvb"
+            ]
+          },
+          "channel_quality": {
+            "type": "string",
+            "description": "Qualité préférée",
+            "enum": [
+              "auto",
+              "hd",
+              "sd",
+              "ld",
+              "3d"
+            ]
+          },
+          "broadcast_type": {
+            "type": "string",
+            "description": "Type de diffusion",
+            "enum": [
+              "tv"
+            ]
+          },
+          "media": {
+            "type": "string",
+            "description": "Support de stockage",
+            "examples": [
+              "Disque dur"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "description": "Dossier de destination"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Le timer est actif"
+          },
+          "conflict": {
+            "type": "boolean",
+            "description": "Le timer est en conflit avec un autre enregistrement"
+          },
+          "state": {
+            "type": "string",
+            "description": "État du timer",
+            "enum": [
+              "disabled",
+              "start_error",
+              "waiting_start_time",
+              "starting",
+              "running",
+              "running_error",
+              "failed",
+              "finished"
+            ]
+          },
+          "error": {
+            "type": "string",
+            "description": "Message d'erreur si le timer a échoué",
+            "examples": [
+              "none"
+            ]
+          },
+          "has_record_gen": {
+            "type": "boolean",
+            "description": "Généré par un générateur d'enregistrements"
+          },
+          "record_gen_id": {
+            "type": "integer",
+            "description": "ID du générateur d'enregistrements associé"
+          }
+        }
+      },
+      "PvrGenerator": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "params"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Identifiant du générateur"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type de générateur",
+            "examples": [
+              "manual_repeat"
+            ]
+          },
+          "media": {
+            "type": "string",
+            "description": "Support de stockage",
+            "examples": [
+              "Disque dur"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "description": "Dossier de destination"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nom du générateur"
+          },
+          "params": {
+            "$ref": "#/components/schemas/PvrGeneratorParams"
+          }
+        }
+      },
+      "ApiResponse_PvrFinishedRecordingList": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "result": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PvrFinishedRecording"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_PvrFinishedRecording": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "result": {
+                "$ref": "#/components/schemas/PvrFinishedRecording"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_PvrProgrammedTimerList": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "result": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PvrProgrammedTimer"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_PvrProgrammedTimer": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "result": {
+                "$ref": "#/components/schemas/PvrProgrammedTimer"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_PvrGenerator": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "result": {
+                "$ref": "#/components/schemas/PvrGenerator"
+              }
+            }
+          }
+        ]
+      },
+      "PvrProgrammedTimerCreate": {
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "channel_uuid",
+          "name"
+        ],
+        "properties": {
+          "start": {
+            "type": "integer",
+            "description": "Timestamp Unix de début"
+          },
+          "end": {
+            "type": "integer",
+            "description": "Timestamp Unix de fin"
+          },
+          "margin_before": {
+            "type": "integer",
+            "description": "Marge avant (en secondes)"
+          },
+          "margin_after": {
+            "type": "integer",
+            "description": "Marge après (en secondes)"
+          },
+          "channel_uuid": {
+            "type": "string",
+            "description": "UUID de la chaîne"
+          },
+          "channel_type": {
+            "type": "string",
+            "enum": [
+              "",
+              "iptv",
+              "dvb"
+            ]
+          },
+          "channel_quality": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "hd",
+              "sd",
+              "ld",
+              "3d"
+            ]
+          },
+          "broadcast_type": {
+            "type": "string",
+            "enum": [
+              "tv"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "Titre"
+          },
+          "subname": {
+            "type": "string",
+            "description": "Sous-titre"
+          }
+        }
+      },
+      "PvrFinishedRecordingUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nouveau titre"
+          },
+          "subname": {
+            "type": "string",
+            "description": "Nouveau sous-titre"
+          }
+        }
+      },
+      "PvrGeneratorCreate": {
+        "type": "object",
+        "required": [
+          "type",
+          "name",
+          "params"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Type de générateur",
+            "examples": [
+              "manual_repeat"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "Nom du générateur"
+          },
+          "params": {
+            "$ref": "#/components/schemas/PvrGeneratorParams"
+          }
+        }
+      },
+      "PvrGeneratorParams": {
+        "type": "object",
+        "description": "Paramètres de planification",
+        "properties": {
+          "channel_uuid": {
+            "type": "string",
+            "description": "UUID de la chaîne",
+            "examples": [
+              "uuid-webtv-201"
+            ]
+          },
+          "channel_type": {
+            "type": "string",
+            "description": "Type de source préféré",
+            "enum": [
+              "",
+              "iptv",
+              "dvb"
+            ]
+          },
+          "channel_quality": {
+            "type": "string",
+            "description": "Qualité préférée",
+            "enum": [
+              "auto",
+              "hd",
+              "sd",
+              "ld",
+              "3d"
+            ]
+          },
+          "broadcast_type": {
+            "type": "string",
+            "description": "Type de diffusion",
+            "enum": [
+              "tv"
+            ]
+          },
+          "start_hour": {
+            "type": "integer",
+            "description": "Heure de début (0-23)",
+            "minimum": 0,
+            "maximum": 23
+          },
+          "start_min": {
+            "type": "integer",
+            "description": "Minute de début (0-59)",
+            "minimum": 0,
+            "maximum": 59
+          },
+          "start_sec": {
+            "type": "integer",
+            "description": "Seconde de début (0-59)",
+            "minimum": 0,
+            "maximum": 59
+          },
+          "duration": {
+            "type": "integer",
+            "description": "Durée de l'enregistrement en secondes"
+          },
+          "margin_before": {
+            "type": "integer",
+            "description": "Marge avant le début (en secondes)"
+          },
+          "margin_after": {
+            "type": "integer",
+            "description": "Marge après la fin (en secondes)"
+          },
+          "repeat_days": {
+            "type": "object",
+            "description": "Jours de répétition",
+            "properties": {
+              "monday": {
+                "type": "boolean"
+              },
+              "tuesday": {
+                "type": "boolean"
+              },
+              "wednesday": {
+                "type": "boolean"
+              },
+              "thursday": {
+                "type": "boolean"
+              },
+              "friday": {
+                "type": "boolean"
+              },
+              "saturday": {
+                "type": "boolean"
+              },
+              "sunday": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
       }
     },
     "parameters": {
@@ -15545,6 +16027,9 @@
   "security": [
     {
       "sessionCookie": []
+    },
+    {
+      "appAuth": []
     }
   ]
 }
