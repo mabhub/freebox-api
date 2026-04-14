@@ -1,0 +1,14 @@
+{
+  "name": "freebox-api-spec",
+  "version": "1.0.0",
+  "description": "OpenAPI specification for the Freebox OS API",
+  "private": true,
+  "scripts": {
+    "lint": "redocly lint --config=.redocly.yaml freebox-openapi.json",
+    "preview": "redocly preview-docs --config=.redocly.yaml freebox-openapi.json",
+    "build": "redocly build-docs --config=.redocly.yaml freebox-openapi.json"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^1.25.0"
+  }
+}
