@@ -180,6 +180,10 @@
     {
       "name": "VPN Client",
       "description": "Client VPN"
+    },
+    {
+      "name": "Domaines",
+      "description": "Gestion des noms de domaine personnalisés associés à la Freebox et import de certificats SSL (LetsEncrypt ou autre). **Endpoints non documentés officiellement** (ticket Free FS#19842 ouvert depuis 2022) mais stables depuis plus de 30 mois et utilisés par plusieurs librairies communautaires."
     }
   ],
   "paths": {
@@ -10487,6 +10491,266 @@
           }
         ]
       }
+    },
+    "/domain/config/": {
+      "get": {
+        "operationId": "getDomainConfig",
+        "summary": "Configuration globale des domaines",
+        "description": "Retourne la configuration globale (notamment le `default_domain`).",
+        "tags": [
+          "Domaines"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_DomainConfig"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateDomainConfig",
+        "summary": "Met à jour la configuration des domaines",
+        "description": "Permet notamment de changer le domaine par défaut. Nécessite le droit `settings`.",
+        "tags": [
+          "Domaines"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DomainConfigUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Configuration mise à jour",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_DomainConfig"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/domain/owned/": {
+      "get": {
+        "operationId": "listOwnedDomains",
+        "summary": "Liste des domaines configurés",
+        "description": "Retourne tous les domaines associés à la Freebox avec l'état de leurs certificats RSA/ECDSA.",
+        "tags": [
+          "Domaines"
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des domaines",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_DomainList"
+                },
+                "examples": {
+                  "deux_domaines": {
+                    "summary": "Deux domaines configurés",
+                    "value": {
+                      "success": true,
+                      "result": [
+                        {
+                          "id": "abcd1234.fbxos.fr",
+                          "type": "fbxos",
+                          "owner": "system",
+                          "certs": {}
+                        },
+                        {
+                          "id": "freeboite.fr",
+                          "type": "custom",
+                          "owner": "user",
+                          "certs": {
+                            "rsa": {
+                              "status": "issued",
+                              "days_left": 89,
+                              "expire": 1784326800
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      },
+      "post": {
+        "operationId": "addOwnedDomain",
+        "summary": "Ajoute un domaine personnalisé",
+        "description": "Ajoute un domaine à la Freebox. Le domaine doit déjà pointer (enregistrement A/AAAA) vers l'IP publique de la Freebox. Nécessite le droit `settings`.",
+        "tags": [
+          "Domaines"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DomainCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Domaine ajouté",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Domain"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/domain/owned/{domainId}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DomainId"
+        }
+      ],
+      "get": {
+        "operationId": "getOwnedDomain",
+        "summary": "Détails d'un domaine",
+        "tags": [
+          "Domaines"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Domain"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteOwnedDomain",
+        "summary": "Supprime un domaine",
+        "description": "Supprime un domaine et son certificat associé. Nécessite le droit `settings`.",
+        "tags": [
+          "Domaines"
+        ],
+        "responses": {
+          "200": {
+            "description": "Domaine supprimé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Empty"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/domain/owned/{domainId}/import_cert/": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DomainId"
+        }
+      ],
+      "post": {
+        "operationId": "importDomainCert",
+        "summary": "Importe un certificat SSL pour un domaine",
+        "description": "Installe un certificat SSL (typiquement émis par LetsEncrypt via challenge DNS-01) pour le domaine indiqué. Remplace le certificat existant du même `key_type`.\n\n**Important :** les PEM doivent conserver leurs sauts de ligne (encodés `\\n` dans le JSON). Le champ `intermediates` doit contenir la chaîne CA (fichier `chain.pem` de certbot, PAS `fullchain.pem`).\n\nNécessite le droit `settings`.",
+        "tags": [
+          "Domaines"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportCertRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Certificat importé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Empty"
+                },
+                "examples": {
+                  "ok": {
+                    "value": {
+                      "success": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission `settings` manquante pour l'application",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "insufficient_rights": {
+                    "value": {
+                      "success": false,
+                      "error_code": "insufficient_rights",
+                      "missing_right": "settings",
+                      "msg": "Cette application n'est pas autorisée à accéder à cette fonction"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -15893,6 +16157,193 @@
             }
           }
         }
+      },
+      "DomainCertStatus": {
+        "type": "object",
+        "description": "État d'un certificat (RSA ou ECDSA) pour un domaine.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "issued",
+              "pending",
+              "failed",
+              "unknown"
+            ],
+            "description": "État courant du certificat"
+          },
+          "days_left": {
+            "type": "integer",
+            "description": "Nombre de jours restants avant expiration"
+          },
+          "expire": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Timestamp Unix d'expiration"
+          }
+        }
+      },
+      "Domain": {
+        "type": "object",
+        "description": "Domaine configuré sur la Freebox.",
+        "required": [
+          "id",
+          "type",
+          "owner"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Nom de domaine (ex: `mondomaine.fr` ou `xxxx.fbxos.fr`)",
+            "example": "freeboite.fr"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "fbxos",
+              "custom"
+            ],
+            "description": "`fbxos` = domaine par défaut attribué par Free ; `custom` = domaine perso"
+          },
+          "owner": {
+            "type": "string",
+            "description": "Propriétaire (ex: identifiant Free, ou `user`)"
+          },
+          "certs": {
+            "type": "object",
+            "description": "Certificats par type de clé. `{}` si aucun certificat.",
+            "properties": {
+              "rsa": {
+                "$ref": "#/components/schemas/DomainCertStatus"
+              },
+              "ec": {
+                "$ref": "#/components/schemas/DomainCertStatus"
+              }
+            }
+          }
+        }
+      },
+      "DomainConfig": {
+        "type": "object",
+        "description": "Configuration globale de la gestion des domaines.",
+        "properties": {
+          "default_domain": {
+            "type": "string",
+            "description": "Identifiant (`id`) du domaine utilisé par défaut",
+            "example": "freeboite.fr"
+          }
+        }
+      },
+      "DomainCreateRequest": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Nom de domaine à ajouter. Doit pointer (A/AAAA) vers l'IP publique de la Freebox.",
+            "example": "freeboite.fr"
+          }
+        }
+      },
+      "ImportCertRequest": {
+        "type": "object",
+        "description": "Import d'un certificat SSL existant (ex: émis par LetsEncrypt via DNS-01).",
+        "required": [
+          "key_type",
+          "cert_pem",
+          "key_pem",
+          "intermediates"
+        ],
+        "properties": {
+          "key_type": {
+            "type": "string",
+            "enum": [
+              "rsa",
+              "ec"
+            ],
+            "description": "Type de clé du certificat"
+          },
+          "cert_pem": {
+            "type": "string",
+            "description": "Certificat serveur au format PEM (bloc `-----BEGIN CERTIFICATE----- ... -----END CERTIFICATE-----`). Les sauts de ligne doivent être préservés (`\\n` dans le JSON).",
+            "example": "-----BEGIN CERTIFICATE-----\nMIIF...\n-----END CERTIFICATE-----\n"
+          },
+          "key_pem": {
+            "type": "string",
+            "description": "Clé privée au format PEM (`-----BEGIN PRIVATE KEY-----`)"
+          },
+          "intermediates": {
+            "type": "string",
+            "description": "Certificat(s) intermédiaire(s) de la chaîne CA au format PEM"
+          }
+        }
+      },
+      "DomainConfigUpdate": {
+        "type": "object",
+        "properties": {
+          "default_domain": {
+            "type": "string",
+            "description": "Nouveau domaine par défaut"
+          }
+        }
+      },
+      "ApiResponse_DomainList": {
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Domain"
+            }
+          }
+        }
+      },
+      "ApiResponse_Domain": {
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "result": {
+            "$ref": "#/components/schemas/Domain"
+          }
+        }
+      },
+      "ApiResponse_DomainConfig": {
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "result": {
+            "$ref": "#/components/schemas/DomainConfig"
+          }
+        }
+      },
+      "ApiResponse_Empty": {
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          }
+        }
       }
     },
     "parameters": {
@@ -15975,6 +16426,16 @@
             "EMI_23374629_AG"
           ]
         }
+      },
+      "DomainId": {
+        "name": "domainId",
+        "in": "path",
+        "required": true,
+        "description": "Identifiant du domaine (le nom de domaine lui-même)",
+        "schema": {
+          "type": "string"
+        },
+        "example": "freeboite.fr"
       }
     },
     "responses": {
