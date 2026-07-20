@@ -7576,6 +7576,34 @@
             "sessionCookie": []
           }
         ]
+      },
+      "delete": {
+        "operationId": "deleteLanHost",
+        "summary": "Oublier un hôte du LAN browser",
+        "description": "Supprime définitivement une entrée hôte de la liste du LAN browser (équivalent du bouton « Oublier ce périphérique » de Freebox OS). Utile pour purger les hôtes inactifs ou les adresses MAC aléatoires obsolètes. hostId = `ether-<mac minuscules>` (champ `id` du LanDevice). Réponses observées : `success:true` ; `error_code:nohost` si l'ID n'existe pas (idempotent). NB : opération absente de la doc officielle Freebox, relevée par capture réseau de l'UI (2026-06-20).",
+        "tags": [
+          "Réseau local"
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès (ou error_code:nohost si l'ID est inconnu)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseBase"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ]
       }
     },
     "/lan/wol/{interface}/": {
@@ -10750,6 +10778,76 @@
             }
           }
         }
+      }
+    },
+    "/lan/routes/": {
+      "get": {
+        "operationId": "listLanRoutes",
+        "summary": "Routes statiques LAN",
+        "description": "Retourne la liste des routes statiques LAN (préfixe destination -> passerelle next-hop). Table vide => result null. Découvert via l'UI « Routage » non documentée dans l'export OpenAPI d'origine (2026-06-10).",
+        "tags": [
+          "Réseau local"
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des routes statiques",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_LanRouteList"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "setLanRoutes",
+        "summary": "Remplacer l'ensemble des routes statiques LAN",
+        "description": "Écrit la table complète des routes statiques. Le corps est le TABLEAU complet des routes voulues (sémantique « set », pas « append ») : envoyer un tableau vide supprime toutes les routes. C'est ainsi que l'UI persiste les ajouts/suppressions (un seul PUT du store entier).",
+        "tags": [
+          "Réseau local"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LanRoute"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Table de routes après écriture",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_LanRouteList"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ]
       }
     }
   },
@@ -16344,6 +16442,58 @@
             "type": "boolean"
           }
         }
+      },
+      "LanRoute": {
+        "type": "object",
+        "description": "Route statique LAN. Permet de déclarer un next-hop (passerelle) pour un préfixe IPv4 destination, en complément de la route par défaut. Source : application UI « Routage » (Fbx.os.app.settings.Routing, RouteModel).",
+        "required": [
+          "prefix",
+          "gateway"
+        ],
+        "properties": {
+          "prefix": {
+            "type": "string",
+            "description": "Préfixe IPv4 destination en notation CIDR (ex. 192.168.2.0/24).",
+            "examples": [
+              "192.168.2.0/24"
+            ]
+          },
+          "gateway": {
+            "type": "string",
+            "format": "ipv4",
+            "description": "Adresse IPv4 du next-hop (passerelle) vers laquelle router ce préfixe.",
+            "examples": [
+              "192.168.1.10"
+            ]
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Route active ou non."
+          },
+          "description": {
+            "type": "string",
+            "description": "Libellé libre de la route."
+          }
+        }
+      },
+      "ApiResponse_LanRouteList": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "result": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LanRoute"
+                }
+              }
+            }
+          }
+        ]
       }
     },
     "parameters": {
