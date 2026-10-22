@@ -11097,15 +11097,15 @@
           },
           "available": {
             "type": "boolean",
-            "description": "La chaîne est actuellement accessible"
+            "description": "false : option Free non souscrite (beIN, OCS, Ligue 1+…). Les chaînes d'un abonnement tiers (`has_abo`) restent à true même sans abonnement. Même valeur que `available` du bouquet"
           },
           "has_service": {
             "type": "boolean",
-            "description": "Un flux de streaming est disponible pour cette chaîne"
+            "description": "Freebox OS s'en sert quand `available` est false : true → « pas abonné », false → « pas disponible en multiposte ». Relevé : true pour toutes les chaînes du bouquet"
           },
           "has_abo": {
             "type": "boolean",
-            "description": "La chaîne nécessite un abonnement payant (true = payante ou incluse dans un pack, false = gratuite)"
+            "description": "Chaîne d'un abonnement tiers (packs CANAL+ : CANAL+, Disney Channel, Eurosport 1, Paris Première…). La Freebox ne vérifie pas cet abonnement : `available` vaut true qu'on y soit abonné ou non. false pour toutes les options Free non souscrites"
           },
           "logo_url": {
             "type": "string",
@@ -11222,11 +11222,11 @@
           },
           "pub_service": {
             "type": "boolean",
-            "description": "Service public / chaîne gratuite TNT"
+            "description": "Lecture possible en multiposte (sur ordinateur). Ne signifie pas « TNT gratuite » : TF1, M6, W9, TMC, LCI, CANAL+ sont à false"
           },
           "available": {
             "type": "boolean",
-            "description": "La chaîne est accessible dans ce bouquet"
+            "description": "Même valeur que `available` de /tv/channels/ : false = option Free non souscrite"
           },
           "sub_number": {
             "type": "integer",
