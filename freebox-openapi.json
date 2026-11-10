@@ -5836,7 +5836,7 @@
                       "select_srt_track",
                       "select_stream"
                     ],
-                    "description": "Commande à exécuter. `select_audio_track` et `select_srt_track` vérifiés sur Player Révolution ; `select_stream` non testé (capacité à false sur le média essayé)."
+                    "description": "Commande à exécuter. `select_audio_track` et `select_srt_track` vérifiés sur Player Révolution. `select_stream` choisit la qualité du flux d'une chaîne TV en direct (« select quality of the stream ») : sur Player Révolution, il ne fait que revenir au flux automatique, quelle que soit la valeur de `track_id`."
                   },
                   "args": {
                     "type": "object",
@@ -5845,7 +5845,7 @@
                       "track_id": {
                         "type": "integer",
                         "minimum": -1,
-                        "description": "Piste à sélectionner, dans `audioList`, `subtitleList` ou `videoList` selon la commande. Avec `select_srt_track`, -1 coupe les sous-titres. Non tranché : position dans la liste ou `uid` de la piste (identiques sur le média testé).",
+                        "description": "Position (base 0) de la piste dans `audioList` ou `subtitleList` selon la commande, et non son `uid` (vérifié sur un MKV où les deux diffèrent). Avec `select_srt_track`, -1 coupe les sous-titres. Valeur hors liste : ignorée sans erreur. Pour `select_stream`, la valeur est sans effet observable (voir `cmd`).",
                         "examples": [
                           1
                         ]
@@ -5912,7 +5912,7 @@
             "sessionCookie": []
           }
         ],
-        "description": "Les commandes acceptées dépendent du média en cours : voir `result.player.capabilities` dans `/status/`.\n\nErreurs observées :\n- champ `cmd` absent (ex. `command`) → `inval`, « missing cmd » ;\n- argument inconnu (`index`, `id`, `uid`, `track`, `pid`) → `internal`, « Impossible de contrôler le lecteur » ;\n- `select_audio_track` sans `args` → `success: true` mais aucun effet."
+        "description": "Les commandes acceptées dépendent du média en cours : voir `result.player.capabilities` dans `/status/`. La documentation embarquée par la box (`http://mafreebox.freebox.fr/doc/index.html`, section Player, marquée UNSTABLE) liste les commandes mais aucun argument.\n\nErreurs observées :\n- champ `cmd` absent (ex. `command`) → `inval`, « missing cmd » ;\n- argument inconnu (`index`, `id`, `uid`, `track`, `pid`, `quality`, `flavour`) ou `track_id` non entier → `internal`, « Impossible de contrôler le lecteur » ;\n- commande non disponible sur le média → `not_supported` ;\n- `select_*` sans `args` ou avec un `track_id` hors liste → `success: true` mais aucun effet : relire `/status/` pour confirmer."
       }
     },
     "/player/{playerId}/api/v6/control/open": {
@@ -15665,9 +15665,10 @@
         "properties": {
           "source": {
             "type": "string",
-            "description": "URL du média lu",
+            "description": "URL du média lu. En TV en direct, la qualité choisie dans le menu du Player apparaît en paramètre `flavour` (absent = automatique)",
             "examples": [
-              "rtsp://rtsp-server/tsfile/stream?fbxpvr_id=420"
+              "rtsp://rtsp-server/tsfile/stream?fbxpvr_id=420",
+              "rtsp://rtsp-server/fbxtv_priv/stream?namespace=1&service=201&flavour=sd"
             ]
           },
           "playbackState": {
@@ -15714,7 +15715,7 @@
           },
           "audioIndex": {
             "type": "integer",
-            "description": "Piste audio active"
+            "description": "Position de la piste audio active dans `audioList`"
           },
           "audioList": {
             "type": "array",
@@ -15724,7 +15725,7 @@
           },
           "subtitleIndex": {
             "type": "integer",
-            "description": "Piste de sous-titres active (-1 = aucun)"
+            "description": "Position de la piste de sous-titres active dans `subtitleList` (-1 = aucun)"
           },
           "subtitleList": {
             "type": "array",
@@ -15734,7 +15735,7 @@
           },
           "videoIndex": {
             "type": "integer",
-            "description": "Piste vidéo active"
+            "description": "Position de la piste vidéo active dans `videoList`"
           },
           "videoList": {
             "type": "array",
@@ -15749,7 +15750,7 @@
         "properties": {
           "uid": {
             "type": "integer",
-            "description": "Identifiant de la piste"
+            "description": "Identifiant de la piste (pour un MKV, numéro de piste du conteneur). Ne pas confondre avec la position attendue par `track_id`"
           },
           "pid": {
             "type": "integer",
@@ -15808,7 +15809,7 @@
         "properties": {
           "uid": {
             "type": "integer",
-            "description": "Identifiant de la piste"
+            "description": "Identifiant de la piste (pour un MKV, numéro de piste du conteneur). Ne pas confondre avec la position attendue par `track_id`"
           },
           "pid": {
             "type": "integer",
@@ -15841,7 +15842,7 @@
         "properties": {
           "uid": {
             "type": "integer",
-            "description": "Identifiant de la piste"
+            "description": "Identifiant de la piste (pour un MKV, numéro de piste du conteneur). Ne pas confondre avec la position attendue par `track_id`"
           },
           "pid": {
             "type": "integer",
