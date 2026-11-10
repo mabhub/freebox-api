@@ -5943,7 +5943,22 @@
                 "properties": {
                   "url": {
                     "type": "string",
-                    "format": "uri"
+                    "format": "uri",
+                    "description": "URL à ouvrir sur le Player. Schémas vérifiés sur Player Révolution : `tv:?channel=<numéro>` lance la chaîne en direct ; `pvr:?id=<id>` ouvre l'application des enregistrements sur sa liste, sans lancer l'enregistrement désigné (l'identifiant est ignoré ou ne suffit pas)."
+                  }
+                }
+              },
+              "examples": {
+                "tv": {
+                  "summary": "Chaîne 2 en direct",
+                  "value": {
+                    "url": "tv:?channel=2"
+                  }
+                },
+                "pvr": {
+                  "summary": "Liste des enregistrements (l'id ne lance pas la lecture)",
+                  "value": {
+                    "url": "pvr:?id=420"
                   }
                 }
               }
