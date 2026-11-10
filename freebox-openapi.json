@@ -5945,6 +5945,14 @@
                     "type": "string",
                     "format": "uri",
                     "description": "URL à ouvrir sur le Player. Schémas vérifiés sur Player Révolution : `tv:?channel=<numéro>` lance la chaîne en direct ; `pvr:?id=<id>` ouvre l'application des enregistrements sur sa liste, sans lancer l'enregistrement désigné (l'identifiant est ignoré ou ne suffit pas)."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "Type MIME du contenu, facultatif (vide par défaut). Oriente le Player vers la bonne application, par exemple le lecteur vidéo pour un fichier distant ou le navigateur pour `text/html`",
+                    "examples": [
+                      "video/x-matroska",
+                      "text/html"
+                    ]
                   }
                 }
               },
@@ -5959,6 +5967,13 @@
                   "summary": "Liste des enregistrements (l'id ne lance pas la lecture)",
                   "value": {
                     "url": "pvr:?id=420"
+                  }
+                },
+                "video": {
+                  "summary": "Fichier vidéo distant dans le lecteur multimédia",
+                  "value": {
+                    "url": "https://raw.githubusercontent.com/ietf-wg-cellar/matroska-test-files/master/test_files/test5.mkv",
+                    "type": "video/x-matroska"
                   }
                 }
               }
