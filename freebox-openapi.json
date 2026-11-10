@@ -5836,19 +5836,59 @@
                       "select_srt_track",
                       "select_stream"
                     ],
-                    "description": "Commande à exécuter. `select_audio_track` et `select_srt_track` vérifiés sur Player Révolution. `select_stream` choisit la qualité du flux d'une chaîne TV en direct (« select quality of the stream ») : sur Player Révolution, il ne fait que revenir au flux automatique, quelle que soit la valeur de `track_id`."
+                    "description": "Commande à exécuter. `select_audio_track`, `select_srt_track` et `select_stream` vérifiés sur Player Révolution ; `seek_to` y est refusé (voir la description de l'opération)."
                   },
                   "args": {
                     "type": "object",
-                    "description": "Arguments de la commande. Pour les commandes `select_*`, seul `track_id` est accepté.",
+                    "description": "Arguments de la commande, selon `cmd` : `track_id` pour `select_audio_track` / `select_srt_track`, `stream` pour `select_stream`, `seek_position` pour `seek_to`. Les applications Free y ajoutent `type`, égal au nom de l'argument.",
                     "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Nature de l'argument. Indispensable pour `select_stream` ; facultatif pour `track_id` (sélection de piste vérifiée sans)",
+                        "enum": [
+                          "track_id",
+                          "stream",
+                          "seek_position"
+                        ]
+                      },
                       "track_id": {
                         "type": "integer",
                         "minimum": -1,
-                        "description": "Position (base 0) de la piste dans `audioList` ou `subtitleList` selon la commande, et non son `uid` (vérifié sur un MKV où les deux diffèrent). Avec `select_srt_track`, -1 coupe les sous-titres. Valeur hors liste : ignorée sans erreur. Pour `select_stream`, la valeur est sans effet observable (voir `cmd`).",
+                        "description": "Position (base 0) de la piste dans `audioList` ou `subtitleList` selon la commande, et non son `uid` (vérifié sur un MKV où les deux diffèrent). Avec `select_srt_track`, -1 coupe les sous-titres. Valeur hors liste : ignorée sans erreur. Sans effet sur `select_stream` (au mieux, retour au flux automatique).",
                         "examples": [
                           1
                         ]
+                      },
+                      "stream": {
+                        "type": "object",
+                        "description": "Flux à sélectionner sur une chaîne TV en direct. Le choix se lit dans `/status/` : paramètre `flavour` de `source` et taille de la piste vidéo",
+                        "required": [
+                          "quality",
+                          "source"
+                        ],
+                        "properties": {
+                          "quality": {
+                            "type": "string",
+                            "description": "Qualité, comme `quality` des flux du bouquet. `auto` retire `flavour` ; `hd` et `sd` vérifiés. Le choix « HD+ » du menu du Player n'a pas de nom connu",
+                            "examples": [
+                              "auto",
+                              "hd",
+                              "sd"
+                            ]
+                          },
+                          "source": {
+                            "type": "string",
+                            "description": "Type de flux, comme `type` des flux du bouquet. Seul `iptv` a été essayé",
+                            "examples": [
+                              "iptv",
+                              "dvb"
+                            ]
+                          }
+                        }
+                      },
+                      "seek_position": {
+                        "type": "integer",
+                        "description": "Position cible pour `seek_to` (format des applications Free, unité non établie). Refusé par le Player Révolution"
                       }
                     }
                   }
@@ -5893,6 +5933,19 @@
                   "value": {
                     "cmd": "seek_forward"
                   }
+                },
+                "qualiteHD": {
+                  "summary": "Passer la chaîne en direct en flux HD",
+                  "value": {
+                    "cmd": "select_stream",
+                    "args": {
+                      "stream": {
+                        "quality": "hd",
+                        "source": "iptv"
+                      },
+                      "type": "stream"
+                    }
+                  }
                 }
               }
             }
@@ -5918,7 +5971,7 @@
             "sessionCookie": []
           }
         ],
-        "description": "Les commandes acceptées dépendent du média en cours : voir `result.player.capabilities` dans `/status/`. La documentation embarquée par la box (`http://mafreebox.freebox.fr/doc/index.html`, section Player, marquée UNSTABLE) liste les commandes mais aucun argument.\n\nErreurs observées :\n- champ `cmd` absent (ex. `command`) → `inval`, « missing cmd » ;\n- argument inconnu (`index`, `id`, `uid`, `track`, `pid`, `quality`, `flavour`) ou `track_id` non entier → `internal`, « Impossible de contrôler le lecteur » ;\n- commande non disponible sur le média → `not_supported` ;\n- `select_*` sans `args` ou avec un `track_id` hors liste → `success: true` mais aucun effet : relire `/status/` pour confirmer.\n\nNavigation dans le média (Player Révolution, enregistrement PVR) :\n- `seek_forward` / `seek_backward` sans argument : saut d'environ 30 s ; pour une durée arbitraire, enchaîner les sauts et relire `position` ;\n- `seek_to` : argument inconnu. Sans `args`, `success: true` sans effet ; `position`, `pos`, `time`, `timestamp`, `seek_to`, `value`, `position_ms`, `ms`, `pos_ms`, `time_ms`, `offset`, `target` (entiers en ms) → `internal`. Le Player renvoie la même erreur pour un nom ou un type de valeur erroné."
+        "description": "Les commandes acceptées dépendent du média en cours : voir `result.player.capabilities` dans `/status/`. La documentation embarquée par la box (`http://mafreebox.freebox.fr/doc/index.html`, section Player, marquée UNSTABLE) liste les commandes mais aucun argument. Les formats d'`args` viennent des applications Android de Free (classe `MediaControlData` : `TrackArgs`, `SeekArgs`, `StreamArgs`), puis ont été vérifiés sur Player Révolution. L'ancienne application appelle la même route sous `/api/v8/` au lieu de `/api/v6/` ; les deux répondent.\n\nErreurs observées :\n- champ `cmd` absent (ex. `command`) → `inval`, « missing cmd » ;\n- argument de nom ou de type inattendu → `internal`, « Impossible de contrôler le lecteur » (même erreur dans les deux cas) ;\n- commande non disponible sur le média → `not_supported` ;\n- commande sans `args`, `track_id` hors liste → `success: true` mais aucun effet : relire `/status/` pour confirmer.\n\nNavigation dans le média (Player Révolution, enregistrement PVR) :\n- `seek_forward` / `seek_backward` sans argument : saut d'environ 30 s ; pour une durée arbitraire, enchaîner les sauts et relire `position` ;\n- `seek_to` : refusé (`internal`) avec le format des applications Free `{\"seek_position\": n, \"type\": \"seek_position\"}`, en ms comme en secondes, sous `/api/v6/` comme `/api/v8/`, malgré `capabilities.seek_to` à true. Même échec signalé en 2021 (bug tracker Freebox FS#32407). Aucune des deux applications Free n'envoie réellement `seek_to` : le format vise probablement d'autres modèles de Player."
       }
     },
     "/player/{playerId}/api/v6/control/open": {
