@@ -5887,6 +5887,12 @@
                   "value": {
                     "cmd": "pause"
                   }
+                },
+                "avance": {
+                  "summary": "Avancer d'environ 30 s",
+                  "value": {
+                    "cmd": "seek_forward"
+                  }
                 }
               }
             }
@@ -5912,7 +5918,7 @@
             "sessionCookie": []
           }
         ],
-        "description": "Les commandes acceptées dépendent du média en cours : voir `result.player.capabilities` dans `/status/`. La documentation embarquée par la box (`http://mafreebox.freebox.fr/doc/index.html`, section Player, marquée UNSTABLE) liste les commandes mais aucun argument.\n\nErreurs observées :\n- champ `cmd` absent (ex. `command`) → `inval`, « missing cmd » ;\n- argument inconnu (`index`, `id`, `uid`, `track`, `pid`, `quality`, `flavour`) ou `track_id` non entier → `internal`, « Impossible de contrôler le lecteur » ;\n- commande non disponible sur le média → `not_supported` ;\n- `select_*` sans `args` ou avec un `track_id` hors liste → `success: true` mais aucun effet : relire `/status/` pour confirmer."
+        "description": "Les commandes acceptées dépendent du média en cours : voir `result.player.capabilities` dans `/status/`. La documentation embarquée par la box (`http://mafreebox.freebox.fr/doc/index.html`, section Player, marquée UNSTABLE) liste les commandes mais aucun argument.\n\nErreurs observées :\n- champ `cmd` absent (ex. `command`) → `inval`, « missing cmd » ;\n- argument inconnu (`index`, `id`, `uid`, `track`, `pid`, `quality`, `flavour`) ou `track_id` non entier → `internal`, « Impossible de contrôler le lecteur » ;\n- commande non disponible sur le média → `not_supported` ;\n- `select_*` sans `args` ou avec un `track_id` hors liste → `success: true` mais aucun effet : relire `/status/` pour confirmer.\n\nNavigation dans le média (Player Révolution, enregistrement PVR) :\n- `seek_forward` / `seek_backward` sans argument : saut d'environ 30 s ; pour une durée arbitraire, enchaîner les sauts et relire `position` ;\n- `seek_to` : argument inconnu. Sans `args`, `success: true` sans effet ; `position`, `pos`, `time`, `timestamp`, `seek_to`, `value`, `position_ms`, `ms`, `pos_ms`, `time_ms`, `offset`, `target` (entiers en ms) → `internal`. Le Player renvoie la même erreur pour un nom ou un type de valeur erroné."
       }
     },
     "/player/{playerId}/api/v6/control/open": {
