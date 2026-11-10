@@ -5671,7 +5671,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponseBase"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponseBase"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "result": {
+                          "$ref": "#/components/schemas/PlayerStatus"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -5684,7 +5696,8 @@
           {
             "sessionCookie": []
           }
-        ]
+        ],
+        "description": "État du Player et du média en cours. Le contenu de `foreground_app.context` dépend de l'application au premier plan : la sous-clé `player` n'existe que pendant une lecture (observé sur Player Révolution `fbx6hd`, lecture d'un enregistrement PVR). Requiert le droit `player` (« Contrôle du Freebox Player »), à cocher à la main dans Freebox OS : il n'est pas accordé à l'autorisation."
       }
     },
     "/player/{playerId}/api/v6/control/volume": {
@@ -5822,10 +5835,57 @@
                       "select_audio_track",
                       "select_srt_track",
                       "select_stream"
-                    ]
+                    ],
+                    "description": "Commande à exécuter. `select_audio_track` et `select_srt_track` vérifiés sur Player Révolution ; `select_stream` non testé (capacité à false sur le média essayé)."
                   },
                   "args": {
-                    "type": "object"
+                    "type": "object",
+                    "description": "Arguments de la commande. Pour les commandes `select_*`, seul `track_id` est accepté.",
+                    "properties": {
+                      "track_id": {
+                        "type": "integer",
+                        "minimum": -1,
+                        "description": "Piste à sélectionner, dans `audioList`, `subtitleList` ou `videoList` selon la commande. Avec `select_srt_track`, -1 coupe les sous-titres. Non tranché : position dans la liste ou `uid` de la piste (identiques sur le média testé).",
+                        "examples": [
+                          1
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "examples": {
+                "audio": {
+                  "summary": "Passer sur la 2e piste audio",
+                  "value": {
+                    "cmd": "select_audio_track",
+                    "args": {
+                      "track_id": 1
+                    }
+                  }
+                },
+                "sousTitres": {
+                  "summary": "Activer la 2e piste de sous-titres",
+                  "value": {
+                    "cmd": "select_srt_track",
+                    "args": {
+                      "track_id": 1
+                    }
+                  }
+                },
+                "sansSousTitres": {
+                  "summary": "Couper les sous-titres",
+                  "value": {
+                    "cmd": "select_srt_track",
+                    "args": {
+                      "track_id": -1
+                    }
+                  }
+                },
+                "pause": {
+                  "summary": "Pause",
+                  "value": {
+                    "cmd": "pause"
                   }
                 }
               }
@@ -5851,7 +5911,8 @@
           {
             "sessionCookie": []
           }
-        ]
+        ],
+        "description": "Les commandes acceptées dépendent du média en cours : voir `result.player.capabilities` dans `/status/`.\n\nErreurs observées :\n- champ `cmd` absent (ex. `command`) → `inval`, « missing cmd » ;\n- argument inconnu (`index`, `id`, `uid`, `track`, `pid`) → `internal`, « Impossible de contrôler le lecteur » ;\n- `select_audio_track` sans `args` → `success: true` mais aucun effet."
       }
     },
     "/player/{playerId}/api/v6/control/open": {
@@ -15545,6 +15606,340 @@
           },
           "reachable": {
             "type": "boolean"
+          }
+        }
+      },
+      "PlayerStatus": {
+        "type": "object",
+        "description": "État du Player (`/player/{playerId}/api/v6/status/`)",
+        "properties": {
+          "power_state": {
+            "type": "string",
+            "description": "État d'alimentation",
+            "examples": [
+              "running"
+            ]
+          },
+          "foreground_app": {
+            "$ref": "#/components/schemas/PlayerForegroundApp"
+          },
+          "player": {
+            "$ref": "#/components/schemas/PlayerMediaSession"
+          }
+        }
+      },
+      "PlayerForegroundApp": {
+        "type": "object",
+        "description": "Application au premier plan sur le Player",
+        "properties": {
+          "package": {
+            "type": "string",
+            "examples": [
+              "fr.freebox.pvr"
+            ]
+          },
+          "package_id": {
+            "type": "integer",
+            "examples": [
+              31
+            ]
+          },
+          "cur_url": {
+            "type": "string",
+            "description": "URL courante (vide pour une lecture PVR)"
+          },
+          "context": {
+            "type": "object",
+            "description": "Contexte propre à l'application",
+            "properties": {
+              "player": {
+                "$ref": "#/components/schemas/PlayerMediaContext"
+              }
+            }
+          }
+        }
+      },
+      "PlayerMediaContext": {
+        "type": "object",
+        "description": "État détaillé du lecteur multimédia, avec les pistes disponibles et actives. Les positions sont en millisecondes ; certaines sont renvoyées sous forme de chaîne.",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "URL du média lu",
+            "examples": [
+              "rtsp://rtsp-server/tsfile/stream?fbxpvr_id=420"
+            ]
+          },
+          "playbackState": {
+            "type": "string",
+            "examples": [
+              "play"
+            ]
+          },
+          "mediaState": {
+            "type": "string",
+            "examples": [
+              "ready"
+            ]
+          },
+          "sourceHidden": {
+            "type": "boolean"
+          },
+          "duration": {
+            "type": "integer",
+            "description": "Durée (ms)"
+          },
+          "position": {
+            "type": "integer",
+            "description": "Position (ms)"
+          },
+          "curPos": {
+            "type": "string",
+            "description": "Position (ms), en chaîne"
+          },
+          "minPos": {
+            "type": "string",
+            "description": "Position minimale (ms), en chaîne"
+          },
+          "maxPos": {
+            "type": "string",
+            "description": "Position maximale (ms), en chaîne"
+          },
+          "livePos": {
+            "type": "string",
+            "description": "Position du direct (ms), en chaîne"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "audioIndex": {
+            "type": "integer",
+            "description": "Piste audio active"
+          },
+          "audioList": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlayerAudioTrack"
+            }
+          },
+          "subtitleIndex": {
+            "type": "integer",
+            "description": "Piste de sous-titres active (-1 = aucun)"
+          },
+          "subtitleList": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlayerSubtitleTrack"
+            }
+          },
+          "videoIndex": {
+            "type": "integer",
+            "description": "Piste vidéo active"
+          },
+          "videoList": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlayerVideoTrack"
+            }
+          }
+        }
+      },
+      "PlayerAudioTrack": {
+        "type": "object",
+        "properties": {
+          "uid": {
+            "type": "integer",
+            "description": "Identifiant de la piste"
+          },
+          "pid": {
+            "type": "integer",
+            "description": "PID MPEG-TS"
+          },
+          "language": {
+            "type": "string",
+            "description": "Code langue ISO 639-2. Codes réservés vus en TV française : `qaa` = version originale, `qad` = audiodescription",
+            "examples": [
+              "fra",
+              "qaa",
+              "qad"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "examples": [
+              "Main",
+              "Description"
+            ]
+          },
+          "codec": {
+            "type": "string",
+            "examples": [
+              "AAC"
+            ]
+          },
+          "codecId": {
+            "type": "string",
+            "examples": [
+              "Aac"
+            ]
+          },
+          "channelCount": {
+            "type": "integer",
+            "description": "0 si inconnu (piste non décodée)"
+          },
+          "samplerate": {
+            "type": "integer",
+            "description": "0 si inconnu (piste non décodée)"
+          },
+          "bitrate": {
+            "type": "string"
+          },
+          "adAvailable": {
+            "type": "boolean",
+            "description": "Audiodescription disponible"
+          },
+          "metadataId": {
+            "type": "string"
+          }
+        }
+      },
+      "PlayerSubtitleTrack": {
+        "type": "object",
+        "properties": {
+          "uid": {
+            "type": "integer",
+            "description": "Identifiant de la piste"
+          },
+          "pid": {
+            "type": "integer",
+            "description": "PID MPEG-TS (peut être partagé entre pistes télétexte)"
+          },
+          "language": {
+            "type": "string",
+            "description": "Code langue ISO 639-2. Codes réservés vus en TV française : `qaa` = version originale, `qad` = audiodescription",
+            "examples": [
+              "fra"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "examples": [
+              "Normal",
+              "HearingImpaired"
+            ]
+          },
+          "codec": {
+            "type": "string",
+            "examples": [
+              "Teletext subtitle"
+            ]
+          }
+        }
+      },
+      "PlayerVideoTrack": {
+        "type": "object",
+        "properties": {
+          "uid": {
+            "type": "integer",
+            "description": "Identifiant de la piste"
+          },
+          "pid": {
+            "type": "integer",
+            "description": "PID MPEG-TS"
+          },
+          "codec": {
+            "type": "string",
+            "examples": [
+              "H264"
+            ]
+          },
+          "width": {
+            "type": "integer",
+            "examples": [
+              1440
+            ]
+          },
+          "height": {
+            "type": "integer",
+            "examples": [
+              1080
+            ]
+          },
+          "bitrate": {
+            "type": "string"
+          },
+          "framerate": {
+            "type": "object",
+            "description": "Fréquence d'images en fraction num/den",
+            "properties": {
+              "num": {
+                "type": "integer"
+              },
+              "den": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "PlayerMediaSession": {
+        "type": "object",
+        "description": "Session média en cours, vue normalisée",
+        "properties": {
+          "name": {
+            "type": "string",
+            "examples": [
+              "fr.freebox.pvr/mms"
+            ]
+          },
+          "last_activity": {
+            "type": "integer",
+            "description": "Horodatage Unix"
+          },
+          "state": {
+            "type": "object",
+            "properties": {
+              "playback_state": {
+                "type": "string",
+                "examples": [
+                  "playing"
+                ]
+              },
+              "position_ms": {
+                "type": "integer"
+              },
+              "duration_ms": {
+                "type": "integer"
+              }
+            }
+          },
+          "capabilities": {
+            "type": "object",
+            "description": "Commandes `mediactrl` utilisables sur le média en cours (clé = nom de commande, valeur = disponible)",
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "examples": [
+              {
+                "play": true,
+                "pause": true,
+                "stop": true,
+                "next": true,
+                "prev": true,
+                "seek_forward": true,
+                "seek_backward": true,
+                "seek_to": true,
+                "start_over": true,
+                "select_audio_track": true,
+                "select_srt_track": true,
+                "select_stream": false,
+                "record": false,
+                "record_stop": false,
+                "shuffle": false,
+                "repeat_all": false,
+                "repeat_one": false
+              }
+            ]
           }
         }
       },
